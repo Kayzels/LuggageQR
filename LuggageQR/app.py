@@ -1,17 +1,14 @@
 import sys
 import ctypes
-from PIL import Image
-from PIL.ImageQt import ImageQt
 from PyQt6.QtWidgets import QMainWindow, QApplication
 from PyQt6.QtPrintSupport import QPrinter
-from PyQt6.QtGui import QPixmap, QIcon, QPainter, QImage
-from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPixmap, QIcon
 from LuggageQR.MainWindow import Ui_MainWindow
 from LuggageQR.constants import *
-from LuggageQR.pdfgen import generatePDF
+from LuggageQR.imagegen import generateCardSVG, paintSVG
 
 class MainWindow(QMainWindow, Ui_MainWindow):
-    def __init__(self, *args, obj=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
         self.setupUi(self)
         self.addBlankPreview()
@@ -28,35 +25,32 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def generatePreview(self):
         if self.nameLineEdit.text() == '' or self.cellNoLineEdit.text() == '':
             return
-        generatePDF(self.nameLineEdit.text(), self.cellNoLineEdit.text())
-        pdf_image = str(TAG_FILE_NAME_BASE.resolve().with_suffix('.png'))
-        pixmap = QPixmap(pdf_image)
+
+        size = self.previewImageLabel.size()
+        pixmap = QPixmap(size)
+        pixmap.fill()
+
+        generateCardSVG(self.nameLineEdit.text(), self.cellNoLineEdit.text())
+        paintSVG(pixmap)
+
         self.previewImageLabel.setPixmap(pixmap)
 
     def clearText(self):
         self.nameLineEdit.clear()
         self.cellNoLineEdit.clear()
         self.addBlankPreview()
+        # TODO: Delete generated SVG file
 
     def printPDF(self):
+        # TODO: Add checks for SVG file existing
         printer = QPrinter(mode=QPrinter.PrinterMode.HighResolution)
         printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
         printer.setOutputFileName(PRINTED_FILE_NAME)
-        printer.setPageSize(CARD_SIZE)
+        printer.setPageSize(CARD_SIZE_PAGE)
         printer.setResolution(300)
         printer.setPageMargins(PAGE_MARGINS)
-
-        pdf_image = str(TAG_FILE_NAME_BASE.resolve().with_suffix('.png'))
-
-        painter = QPainter()
-        painter.setRenderHint(QPainter.RenderHint.LosslessImageRendering)
-        painter.begin(printer)
-        area = painter.viewport()
-        image = Image.open(pdf_image)
-        qt_image = ImageQt(image)
-        scaled_image = qt_image.scaled(area.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-        painter.drawImage(area, scaled_image)
-        painter.end()
+        page_rect = printer.pageRect(QPrinter.Unit.DevicePixel)
+        paintSVG(printer, page_rect)
 
 def run():
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(APP_ID)
