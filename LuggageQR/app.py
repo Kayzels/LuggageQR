@@ -1,7 +1,7 @@
 import sys
 import ctypes
 from PyQt6.QtWidgets import QMainWindow, QApplication
-from PyQt6.QtPrintSupport import QPrinter
+from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from PyQt6.QtGui import QPixmap, QIcon
 from LuggageQR.MainWindow import Ui_MainWindow
 from LuggageQR.constants import *
@@ -45,13 +45,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if not TAG_FILE_NAME_BASE.with_suffix(".svg").is_file():
             return
         printer = QPrinter(mode=QPrinter.PrinterMode.HighResolution)
-        printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
-        printer.setOutputFileName(PRINTED_FILE_NAME)
-        printer.setPageSize(CARD_SIZE_PAGE)
-        printer.setResolution(300)
-        printer.setPageMargins(PAGE_MARGINS)
-        page_rect = printer.pageRect(QPrinter.Unit.DevicePixel)
-        paintSVG(printer, page_rect)
+        dialog = QPrintDialog(printer, self)
+        if (dialog.exec() == QPrintDialog.DialogCode.Accepted):
+            printer.setPageSize(CARD_SIZE_PAGE)
+            printer.setResolution(300)
+            printer.setPageMargins(PAGE_MARGINS)
+            page_rect = printer.pageRect(QPrinter.Unit.DevicePixel)
+            paintSVG(printer, page_rect)
 
 def run():
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(APP_ID)
