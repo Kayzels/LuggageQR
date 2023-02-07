@@ -39,10 +39,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.nameLineEdit.clear()
         self.cellNoLineEdit.clear()
         self.addBlankPreview()
-        # TODO: Delete generated SVG file
+        os.remove(TAG_FILE_NAME_BASE.with_suffix(".svg"))
 
     def printPDF(self):
-        # TODO: Add checks for SVG file existing
+        if not TAG_FILE_NAME_BASE.with_suffix(".svg").is_file():
+            return
         printer = QPrinter(mode=QPrinter.PrinterMode.HighResolution)
         printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
         printer.setOutputFileName(PRINTED_FILE_NAME)
