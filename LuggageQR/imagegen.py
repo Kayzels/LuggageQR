@@ -1,3 +1,4 @@
+import os
 import math
 from PyQt6.QtSvg import QSvgRenderer, QSvgGenerator
 from PyQt6.QtCore import Qt, QRectF, QByteArray
@@ -22,6 +23,8 @@ def generateCardSVG(name: str, number: str):
     qr_bytes = generateQR_XML(number)
     qt_qr_bytes = QByteArray(qr_bytes) # type: ignore
 
+    if not (os.path.exists(GENERATED_DIR)):
+        os.makedirs(GENERATED_DIR)
     generated_path = str(TAG_FILE_NAME_BASE.with_suffix(".svg"))
     generator = QSvgGenerator()
     generator.setFileName(generated_path)
